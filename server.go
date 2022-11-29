@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"log"
 	"test/api/injection"
@@ -11,12 +12,19 @@ import (
 
 var (
 	db        *gorm.DB            = injection.CreateDatabase()
+	cache     *redis.Client       = injection.SetupRedisConnection()
 	Migration injection.Migration = injection.NewMigration(db)
 	Seed      injection.Seeder    = injection.NewSeeder(db)
 )
 
 func main() {
 	defer injection.CloseDatabaseConnection(db)
+	defer func(cache *redis.Client) {
+		err := cache.Close()
+		if err != nil {
+
+		}
+	}(cache)
 
 	Migration.Migrate()
 	Seed.Faker()

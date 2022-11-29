@@ -19,14 +19,18 @@ func (m migrationConnection) Migrate() {
 	if utils.EnvVar("APP_ENV", "DEVELOPMENT") == "DEVELOPMENT" {
 		m.connection.Exec("CREATE DATABASE IF NOT EXISTS")
 
-		errUser := m.connection.Migrator().DropTable(&model.User{})
-		if errUser != nil {
-			log.Println("Failed To Drop Table User")
+		if m.connection.Migrator().HasTable(&model.User{}) {
+			errUser := m.connection.Migrator().DropTable(&model.User{})
+			if errUser != nil {
+				log.Println("Failed To Drop Table User")
+			}
 		}
 
-		errBook := m.connection.Migrator().DropTable(&model.Book{})
-		if errBook != nil {
-			log.Println("Failed To Drop Table Book")
+		if m.connection.Migrator().HasTable(&model.Book{}) {
+			errBook := m.connection.Migrator().DropTable(&model.Book{})
+			if errBook != nil {
+				log.Println("Failed To Drop Table Book")
+			}
 		}
 
 		err := m.connection.AutoMigrate(

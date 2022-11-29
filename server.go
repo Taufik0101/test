@@ -22,11 +22,8 @@ func main() {
 	Seed.Faker()
 
 	router := gin.Default()
-
 	router.Use(middleware.CORSMiddleware())
-
 	port := utils.EnvVar("PORT", "8080")
-
 	err := router.Run(":" + port)
 	if err != nil {
 		log.Println("Failed To Start System")

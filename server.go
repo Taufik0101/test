@@ -14,13 +14,21 @@ import (
 )
 
 var (
-	db             *gorm.DB                  = injection.CreateDatabase()
-	cache          *redis.Client             = injection.SetupRedisConnection()
-	Migration      injection.Migration       = injection.NewMigration(db)
-	Seed           injection.Seeder          = injection.NewSeeder(db)
-	UserService    service.UserService       = service.NewUserService(db, cache)
-	UserController controller.UserController = controller.NewUserController(UserService)
-	Routes         api.Route                 = api.NewRoute(UserController)
+	db               *gorm.DB                    = injection.CreateDatabase()
+	cache            *redis.Client               = injection.SetupRedisConnection()
+	Migration        injection.Migration         = injection.NewMigration(db)
+	Seed             injection.Seeder            = injection.NewSeeder(db)
+	UserService      service.UserService         = service.NewUserService(db, cache)
+	BookService      service.BookService         = service.NewBookService(db, cache)
+	BorrowService    service.BorrowService       = service.NewBorrowService(db, cache)
+	UserController   controller.UserController   = controller.NewUserController(UserService)
+	BookController   controller.BookController   = controller.NewBookController(BookService)
+	BorrowController controller.BorrowController = controller.NewBorrowController(BorrowService)
+	Routes           api.Route                   = api.NewRoute(
+		UserController,
+		BookController,
+		BorrowController,
+	)
 )
 
 func main() {

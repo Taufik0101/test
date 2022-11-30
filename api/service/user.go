@@ -1,9 +1,9 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
-	"golang.org/x/net/context"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"log"
@@ -13,11 +13,11 @@ import (
 )
 
 type UserService interface {
-	GetUser() ([]model.User, string)
-	CreateUser(input dto.CreateUser) model.User
-	PutUser(input dto.UpdateUser) model.User
-	PatchUser(input dto.UpdateUser) model.User
-	DeleteUser(id string) bool
+	GetUser() ([]*model.User, string)
+	CreateUser(input dto.CreateUser) (*model.User, error)
+	PutUser(input dto.PutUser) (*model.User, error)
+	PatchUser(input dto.PatchUser) (*model.User, error)
+	DeleteUser(id string) (bool, error)
 }
 
 type userService struct {
@@ -25,8 +25,9 @@ type userService struct {
 	userCache      *redis.Client
 }
 
-func (u userService) GetUser() ([]model.User, string) {
-	var users []model.User
+func (u userService) GetUser() ([]*model.User, string) {
+	//TODO implement me
+	var users []*model.User
 	var dataFrom string
 
 	//Check On Redis Cache User
@@ -61,24 +62,87 @@ func (u userService) GetUser() ([]model.User, string) {
 	return users, dataFrom
 }
 
-func (u userService) CreateUser(input dto.CreateUser) model.User {
+func (u userService) CreateUser(input dto.CreateUser) (*model.User, error) {
 	//TODO implement me
-	panic("implement me")
+	newUser := &model.User{
+		Name:  input.Name,
+		Email: input.Email,
+		Phone: input.Phone,
+	}
+
+	errSave := u.userConnection.Create(newUser).Error
+
+	if errSave != nil {
+		return nil, errSave
+	}
+
+	_, _ = u.userCache.Del(context.Background(), "user").Result()
+
+	return newUser, nil
 }
 
-func (u userService) PutUser(input dto.UpdateUser) model.User {
+func (u userService) PutUser(input dto.PutUser) (*model.User, error) {
 	//TODO implement me
-	panic("implement me")
+	newUser := &model.User{
+		Name:  input.Name,
+		Email: input.Email,
+		Phone: input.Phone,
+	}
+
+	errSave := u.userConnection.Where(model.User{ID: input.ID}).Updates(newUser).Error
+
+	if errSave != nil {
+		return nil, errSave
+	}
+
+	_, _ = u.userCache.Del(context.Background(), "user").Result()
+
+	var NewUser *model.User
+	errGet := u.userConnection.Where(model.User{ID: input.ID}).First(&NewUser).Error
+	if errGet != nil {
+		return nil, errGet
+	}
+
+	return NewUser, nil
 }
 
-func (u userService) PatchUser(input dto.UpdateUser) model.User {
+func (u userService) PatchUser(input dto.PatchUser) (*model.User, error) {
 	//TODO implement me
-	panic("implement me")
+	newUser := &model.User{
+		Name:  input.Name,
+		Email: input.Email,
+		Phone: input.Phone,
+	}
+
+	errSave := u.userConnection.Where(model.User{ID: input.ID}).Updates(newUser).Error
+
+	if errSave != nil {
+		return nil, errSave
+	}
+
+	_, _ = u.userCache.Del(context.Background(), "user").Result()
+
+	var NewUser *model.User
+	errGet := u.userConnection.Where(model.User{ID: input.ID}).First(&NewUser).Error
+	if errGet != nil {
+		return nil, errGet
+	}
+
+	return NewUser, nil
 }
 
-func (u userService) DeleteUser(id string) bool {
+func (u userService) DeleteUser(id string) (bool, error) {
 	//TODO implement me
-	panic("implement me")
+	var user *model.User
+	errDelete := u.userConnection.Where(model.User{ID: id}).Delete(&user).Error
+
+	if errDelete != nil {
+		return false, errDelete
+	}
+
+	_, _ = u.userCache.Del(context.Background(), "user").Result()
+
+	return true, nil
 }
 
 func NewUserService(userConn *gorm.DB, userCaches *redis.Client) UserService {

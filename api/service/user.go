@@ -38,9 +38,9 @@ func (u userService) GetUser() ([]*model.User, string) {
 		dataFrom = "MySQL"
 		u.userConnection.Order(clause.OrderByColumn{
 			Column: clause.Column{
-				Name: "id",
+				Name: "created_at",
 			},
-			Desc: false,
+			Desc: true,
 		}).Find(&users)
 
 		b, err := json.Marshal(&users)

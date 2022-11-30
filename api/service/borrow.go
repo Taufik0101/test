@@ -38,9 +38,9 @@ func (b borrowService) GetBorrow() ([]*model.Borrow, string) {
 		dataFrom = "MySQL"
 		b.borrowConnection.Order(clause.OrderByColumn{
 			Column: clause.Column{
-				Name: "id",
+				Name: "created_at",
 			},
-			Desc: false,
+			Desc: true,
 		}).Preload("Users").Preload("Books").Find(&borrows)
 
 		bes, err := json.Marshal(&borrows)
@@ -69,15 +69,19 @@ func (b borrowService) CreateBorrow(input dto.CreateBorrow) (*model.Borrow, erro
 		BookID: input.BookID,
 	}
 
-	errSave := b.borrowConnection.Preload("Users").Preload("Books").Create(newBorrow).Error
+	errSave := b.borrowConnection.Create(newBorrow).Error
 
 	if errSave != nil {
 		return nil, errSave
 	}
 
+	var NewBorrow *model.Borrow
+	b.borrowConnection.Model(&model.Borrow{}).Where(model.Borrow{ID: newBorrow.ID}).
+		Preload("Users").Preload("Books").First(&NewBorrow)
+
 	_, _ = b.borrowCache.Del(context.Background(), "borrow").Result()
 
-	return newBorrow, nil
+	return NewBorrow, nil
 }
 
 func (b borrowService) PutBorrow(input dto.PutBorrow) (*model.Borrow, error) {

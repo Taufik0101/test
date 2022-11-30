@@ -38,9 +38,9 @@ func (b bookService) GetBook() ([]*model.Book, string) {
 		dataFrom = "MySQL"
 		b.bookConnection.Order(clause.OrderByColumn{
 			Column: clause.Column{
-				Name: "id",
+				Name: "created_at",
 			},
-			Desc: false,
+			Desc: true,
 		}).Find(&books)
 
 		bes, err := json.Marshal(&books)
